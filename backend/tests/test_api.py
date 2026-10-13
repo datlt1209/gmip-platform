@@ -70,7 +70,34 @@ def test_get_indicators_catalog_with_sparkline():
     sp500_item = next(item for item in items if item["id"] == "SP500")
     assert sp500_item["latest_value"] is not None
     assert "sparkline" in sp500_item
+    assert "period_change" in sp500_item
+    assert sp500_item["range"] == "1D"
     assert isinstance(sp500_item["sparkline"], list)
+
+
+def test_get_indicators_catalog_with_custom_timeframes():
+    client = TestClient(app)
+    # Test with 1Q timeframe filter
+    resp_1q = client.get("/api/v1/indicators?range=1Q")
+    assert resp_1q.status_code == 200
+    items_1q = resp_1q.json()["data"]
+    assert len(items_1q) == 24
+    assert items_1q[0]["range"] == "1Q"
+    assert "period_change" in items_1q[0]
+
+    # Test with 1Y timeframe filter
+    resp_1y = client.get("/api/v1/indicators?range=1Y")
+    assert resp_1y.status_code == 200
+    items_1y = resp_1y.json()["data"]
+    assert items_1y[0]["range"] == "1Y"
+
+    # Test history with 3Y
+    resp_hist_3y = client.get("/api/v1/indicators/SP500/history?range=3Y")
+    assert resp_hist_3y.status_code == 200
+    hist_data = resp_hist_3y.json()["data"]
+    assert hist_data["range"] == "3Y"
+    assert len(hist_data["data"]) > 0
+
 
 
 def test_get_indicator_history_endpoint():

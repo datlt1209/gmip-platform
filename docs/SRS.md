@@ -272,31 +272,32 @@ Khép lại phiên giao dịch gần nhất, thị trường tài chính thế g
 ## 7. Đặc Tả User Stories & Acceptance Criteria (Gherkin Format)
 
 ### US-01: Xem Bảng điều khiển (Dashboard) tổng quan chỉ số
-- **Mô tả:** Là một người theo dõi kinh tế, tôi muốn xem một trang Dashboard hiển thị toàn bộ 24 chỉ số kinh tế thế giới được phân theo nhóm rõ ràng, để tôi nắm bắt nhanh bức tranh tổng thể.
+- **Mô tả:** Là một người theo dõi kinh tế, tôi muốn xem một trang Dashboard hiển thị toàn bộ 24 chỉ số kinh tế thế giới được phân theo nhóm rõ ràng và có thanh chọn khung thời gian đa kỳ hạn (`1D`, `1W`, `1M`, `1Q (1 Quý)`, `1Y (1 Năm)`, `2Y (2 Năm)`, `3Y (3 Năm)`, `ALL (Tất cả)`), để tôi nắm bắt nhanh bức tranh tổng thể và biến động theo từng kỳ hạn.
 - **Tiêu chí chấp nhận (AC-01):**
 ```gherkin
 Feature: Dashboard Tổng Quan Chỉ Số Kinh Tế
 
-  Scenario: Hiển thị danh mục chỉ số theo nhóm
+  Scenario: Hiển thị danh mục chỉ số theo nhóm và lọc theo khung thời gian
     Given Người dùng truy cập trang chủ của ứng dụng
     When Trang tải xong dữ liệu thành công
     Then Hệ thống hiển thị 6 nhóm thẻ danh mục: Vĩ mô, Lãi suất, Ngoại hối, Hàng hóa, Chứng khoán, Tâm lý
-    And Mỗi chỉ số hiển thị rõ: Tên, Mã, Giá trị mới nhất, Đơn vị, % thay đổi 1 ngày
+    And Hiển thị bộ lọc khung thời gian: 1D (1 Ngày), 1W (1 Tuần), 1M (1 Tháng), 1Q (1 Quý), 1Y (1 Năm), 2Y (2 Năm), 3Y (3 Năm), ALL (Tất cả)
+    And Mỗi chỉ số hiển thị rõ: Tên, Mã, Giá trị mới nhất, Đơn vị, mức biến động theo kỳ hạn đang chọn (period_change) và biểu đồ mini (sparkline) tương ứng kỳ hạn
     And Màu sắc biến động hiển thị đúng quy chuẩn: Màu xanh nếu tăng, Màu đỏ nếu giảm, Màu xám nếu đi ngang
 ```
 
 ### US-02: Xem chi tiết và lịch sử biến động từng chỉ số
-- **Mô tả:** Là một nhà phân tích, tôi muốn nhấp vào bất kỳ chỉ số nào để xem biểu đồ lịch sử và các mốc thời gian (1W, 1M, 1Y, Tất cả), để đánh giá chuỗi xu hướng dài hạn.
+- **Mô tả:** Là một nhà phân tích, tôi muốn nhấp vào bất kỳ chỉ số nào để xem biểu đồ lịch sử và các mốc thời gian (`1D`, `1W`, `1M`, `1Q (1 Quý / 3M)`, `1Y (1 Năm)`, `2Y (2 Năm)`, `3Y (3 Năm)`, `ALL (Tất cả)`), để đánh giá chuỗi xu hướng ngắn hạn, trung hạn và dài hạn.
 - **Tiêu chí chấp nhận (AC-02):**
 ```gherkin
 Feature: Chi Tiết Chỉ Số & Biểu Đồ Lịch Sử
 
-  Scenario: Xem biểu đồ chuỗi thời gian của chỉ số
+  Scenario: Xem biểu đồ chuỗi thời gian của chỉ số theo đa kỳ hạn
     Given Người dùng đang ở màn hình Dashboard
     When Người dùng nhấp chọn chỉ số "S&P 500"
     Then Hệ thống điều hướng đến trang chi tiết của chỉ số S&P 500
-    And Hiển thị biểu đồ tương tác với các nút bấm chọn khung thời gian: 1 Tuần, 1 Tháng, 1 Năm, Tất cả
-    And Hiển thị bảng số liệu lịch sử đóng cửa tương ứng với ngày tháng rõ ràng
+    And Hiển thị biểu đồ tương tác với các nút bấm chọn khung thời gian: 1 Ngày (1D), 1 Tuần (1W), 1 Tháng (1M), 1 Quý (1Q / 3M), 1 Năm (1Y), 2 Năm (2Y), 3 Năm (3Y), Tất cả (ALL)
+    And Hiển thị bảng số liệu lịch sử đóng cửa tương ứng với ngày tháng rõ ràng theo khung thời gian đã chọn
 ```
 
 ### US-03: Đọc Báo cáo nhận định kinh tế hàng ngày
@@ -440,11 +441,14 @@ Toàn bộ API tuân thủ tiêu chuẩn RESTful, trả về định dạng `app
 
 #### 1. Lấy danh sách chỉ số và trạng thái mới nhất
 - **Endpoint:** `GET /api/v1/indicators`
-- **Query params:** `category` (tùy chọn: `MACRO`, `RATES`, `FX`, `COMMODITY`, `EQUITY`, `SENTIMENT`).
+- **Query params:**
+  - `category` (tùy chọn: `MACRO`, `RATES`, `FX`, `COMMODITY`, `EQUITY`, `SENTIMENT`).
+  - `range` (tùy chọn: `1D`, `1W`, `1M`, `1Q`, `3M`, `1Y`, `2Y`, `3Y`, `ALL`, mặc định `1M`).
 - **Phản hồi 200 OK:**
 ```json
 {
   "status": "success",
+  "range": "1Q",
   "data": [
     {
       "id": "SP500",
@@ -455,6 +459,10 @@ Toàn bộ API tuân thủ tiêu chuẩn RESTful, trả về định dạng `app
       "latest_value": 5815.20,
       "change_1d": 0.61,
       "change_1w": 1.25,
+      "change_1m": 3.40,
+      "change_yoy": 18.50,
+      "period_change": 5.82,
+      "selected_range": "1Q",
       "trend_state": "BULLISH",
       "record_date": "2026-10-12",
       "sparkline": [5750.1, 5762.3, 5780.0, 5815.2]
@@ -465,16 +473,16 @@ Toàn bộ API tuân thủ tiêu chuẩn RESTful, trả về định dạng `app
 
 #### 2. Lấy dữ liệu chuỗi thời gian lịch sử của một chỉ số
 - **Endpoint:** `GET /api/v1/indicators/{indicator_id}/history`
-- **Query params:** `range` (`1W`, `1M`, `3M`, `1Y`, `ALL`).
+- **Query params:** `range` (`1D`, `1W`, `1M`, `1Q`, `3M`, `1Y`, `2Y`, `3Y`, `ALL`).
 - **Phản hồi 200 OK:**
 ```json
 {
   "status": "success",
   "indicator_id": "SP500",
-  "range": "1M",
+  "range": "1Q",
   "data": [
-    { "date": "2026-09-15", "value": 5650.5, "ma_20": 5620.0 },
-    { "date": "2026-10-12", "value": 5815.2, "ma_20": 5760.8 }
+    { "date": "2026-07-15", "value": 5495.3, "ma_20": 5450.0, "ma_50": 5380.2 },
+    { "date": "2026-10-12", "value": 5815.2, "ma_20": 5760.8, "ma_50": 5690.5 }
   ]
 }
 ```

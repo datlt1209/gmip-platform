@@ -21,7 +21,7 @@
 ## 1. Mục Tiêu Dự Án & Nguyên Tắc Vận Hành Của PM
 
 ### 1.1. Mục tiêu cốt lõi
-Xây dựng và đưa vào vận hành hệ thống Web tự động thu thập 24+ chỉ số kinh tế vĩ mô toàn cầu, phân tích định lượng xu hướng và xuất bản báo cáo nhận định kinh tế hàng ngày lúc **07:00 AM (giờ Việt Nam)** với chi phí dữ liệu $0.
+Xay dựng và đưa vào vận hành hệ thống Web tự động thu thập 24+ chỉ số kinh tế vĩ mô toàn cầu, phân tích định lượng xu hướng và xuất bản báo cáo nhận định kinh tế hàng ngày lúc **07:00 AM (giờ Việt Nam)** với chi phí dữ liệu $0.
 
 ### 1.2. Nguyên tắc quản trị của Project Manager (Tuân thủ `rule.md`)
 1. **Tuân thủ thứ bậc tài liệu:**
@@ -110,6 +110,7 @@ flowchart LR
 - [x] **TASK-22:** Kiểm thử tải và tối ưu hóa thời gian phản hồi API dưới 300ms, tải trang UI dưới 1.5s. *(DevOps / Backend Dev)*
 - [x] **TASK-23:** Chạy thử nghiệm thực tế (Dry Run) trong 3 ngày liên tiếp lúc 07:00 AM để đánh giá độ ổn định. *(PM / QA)*
 - [x] **TASK-24:** Tổng kết, cập nhật tài liệu hoàn công, bàn giao sản phẩm cho Chủ đề bài (Gate 4). *(PM)*
+- [x] **TASK-25:** Bổ sung bộ lọc khung thời gian đa kỳ hạn (1 Quý, 1 Năm, 2 Năm, 3 Năm, Tất cả) trên Dashboard & API. *(BA / Backend Dev / Frontend Dev / QA)*
 
 ---
 

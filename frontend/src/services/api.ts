@@ -32,14 +32,14 @@ async function request<T>(path: string): Promise<T> {
 
 const delay = <T,>(v: T) => new Promise<T>((r) => setTimeout(() => r(v), 250));
 
-export async function getIndicators(category?: string): Promise<Indicator[]> {
+export async function getIndicators(category?: string, range: RangeKey = "1D"): Promise<Indicator[]> {
   const fallback = () => {
-    const all = mockIndicators();
+    const all = mockIndicators(range);
     return category ? all.filter((i) => i.category === category) : all;
   };
   if (USE_MOCK) return delay(fallback());
   try {
-    const raw = await request<RawIndicator[]>(`/indicators${category ? `?category=${category}` : ""}`);
+    const raw = await request<RawIndicator[]>(`/indicators?range=${range}${category ? `&category=${category}` : ""}`);
     return raw.map(normalizeIndicator);
   } catch {
     return fallback();
@@ -59,8 +59,8 @@ function normalizeIndicator(r: RawIndicator): Indicator {
   return { ...r, latest_value: lv ?? null };
 }
 
-export async function getIndicator(id: string): Promise<Indicator> {
-  const list = await getIndicators();
+export async function getIndicator(id: string, range: RangeKey = "1D"): Promise<Indicator> {
+  const list = await getIndicators(undefined, range);
   const found = list.find((i) => i.id === id);
   if (!found) throw new ApiError("Không tìm thấy chỉ số", 404);
   return found;

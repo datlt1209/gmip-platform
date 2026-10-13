@@ -1,6 +1,6 @@
 export type Category = "MACRO" | "RATES" | "FX" | "COMMODITY" | "EQUITY" | "SENTIMENT";
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
-export type RangeKey = "1W" | "1M" | "3M" | "1Y" | "ALL";
+export type RangeKey = "1D" | "1W" | "1M" | "1Q" | "3M" | "1Y" | "2Y" | "3Y" | "ALL";
 
 export interface ApiResponse<T> {
   status: string;
@@ -29,6 +29,8 @@ export interface Indicator {
   change_1w?: number | null;
   change_1m?: number | null;
   change_yoy?: number | null;
+  period_change?: number | null;
+  range?: string;
   trend_state?: string | null;
   record_date?: string | null;
   sparkline?: number[];

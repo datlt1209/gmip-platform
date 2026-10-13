@@ -41,10 +41,10 @@ function rng(seed: number) {
 function series(id: string, base: number, vol: number, n: number): HistoryPoint[] {
   const r = rng([...id].reduce((a, c) => a + c.charCodeAt(0), 7));
   const out: HistoryPoint[] = [];
-  let v = base * 0.92;
+  let v = base * 0.85;
   const today = new Date();
   for (let i = n - 1; i >= 0; i--) {
-    v += r() * vol + (base - v) * 0.03;
+    v += r() * vol + (base - v) * 0.015;
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     out.push({ date: d.toISOString().slice(0, 10), value: +v.toFixed(4) });
@@ -55,14 +55,39 @@ function series(id: string, base: number, vol: number, n: number): HistoryPoint[
   });
 }
 
-const DAYS: Record<RangeKey, number> = { "1W": 7, "1M": 30, "3M": 90, "1Y": 365, ALL: 730 };
-const pct = (a: number, b: number) => (a / b - 1) * 100;
+export const DAYS: Record<RangeKey, number> = {
+  "1D": 1,
+  "1W": 7,
+  "1M": 30,
+  "1Q": 90,
+  "3M": 90,
+  "1Y": 365,
+  "2Y": 730,
+  "3Y": 1095,
+  ALL: 1150,
+};
 
-export function mockIndicators(): Indicator[] {
+const pct = (a: number, b: number) => (b !== 0 ? (a / b - 1) * 100 : 0);
+
+function sampleSparkline(points: HistoryPoint[], maxPoints = 30): number[] {
+  if (points.length <= maxPoints) return points.map((p) => p.value);
+  const step = (points.length - 1) / (maxPoints - 1);
+  return Array.from({ length: maxPoints }, (_, i) => points[Math.round(i * step)].value);
+}
+
+export function mockIndicators(range: RangeKey = "1D"): Indicator[] {
+  const lookback = DAYS[range] ?? 1;
   return DEFS.map(([id, symbol, name_vi, category, unit, base, vol]) => {
-    const s = series(id, base, vol, 400);
+    const s = series(id, base, vol, 1150);
     const last = s[s.length - 1];
     const c1d = pct(last.value, s[s.length - 2].value);
+    const c1w = pct(last.value, s[s.length - 8].value);
+    const c1m = pct(last.value, s[s.length - 31].value);
+    const cyoy = pct(last.value, s[s.length - 366].value);
+    const refIdx = Math.max(0, s.length - 1 - lookback);
+    const periodChange = pct(last.value, s[refIdx].value);
+    const sparkWindow = range === "1D" ? s.slice(-14) : s.slice(-Math.max(7, lookback + 1));
+
     return {
       id,
       symbol,
@@ -72,10 +97,14 @@ export function mockIndicators(): Indicator[] {
       unit,
       latest_value: last.value,
       change_1d: c1d,
-      change_1w: pct(last.value, s[s.length - 8].value),
-      trend_state: c1d > 0.05 ? "BULLISH" : c1d < -0.05 ? "BEARISH" : "NEUTRAL",
+      change_1w: c1w,
+      change_1m: c1m,
+      change_yoy: cyoy,
+      period_change: periodChange,
+      range,
+      trend_state: periodChange > 0.05 ? "BULLISH" : periodChange < -0.05 ? "BEARISH" : "NEUTRAL",
       record_date: last.date,
-      sparkline: s.slice(-30).map((p) => p.value),
+      sparkline: sampleSparkline(sparkWindow, 30),
     };
   });
 }
@@ -83,7 +112,8 @@ export function mockIndicators(): Indicator[] {
 export function mockHistory(id: string, range: RangeKey): HistoryPoint[] {
   const d = DEFS.find((x) => x[0] === id);
   if (!d) return [];
-  return series(id, d[5], d[6], 730).slice(-DAYS[range]);
+  const days = Math.max(7, DAYS[range] ?? 30);
+  return series(id, d[5], d[6], 1150).slice(-days);
 }
 
 const RISKS = ["LOW", "MEDIUM", "HIGH"] as const;

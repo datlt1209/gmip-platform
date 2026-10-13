@@ -4,37 +4,57 @@ import { use, useState } from "react";
 import type { RangeKey } from "@/types";
 import { useAsync } from "@/lib/useAsync";
 import { getHistory, getIndicator } from "@/services/api";
-import { formatDate, formatNumber, formatPercent, trendOf } from "@/lib/format";
+import { formatDate, formatNumber, formatPercent, RANGE_LABEL, trendOf } from "@/lib/format";
 import HistoryChart from "@/components/HistoryChart";
-import RangeTabs from "@/components/RangeTabs";
+import RangeTabs, { CHART_RANGES } from "@/components/RangeTabs";
 import { Empty, ErrorState, Loading } from "@/components/States";
 
 const COLORS = { up: "#16a34a", down: "#dc2626", flat: "#6b7280" };
 
-export default function IndicatorDetailPage({ params }: { params: Promise<{ id: string }> }) {
+function parseInitialRange(raw?: string): RangeKey {
+  if (raw && (CHART_RANGES as string[]).includes(raw)) return raw as RangeKey;
+  return "1M";
+}
+
+export default function IndicatorDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ range?: string }>;
+}) {
   const { id } = use(params);
-  const [range, setRange] = useState<RangeKey>("1M");
-  const ind = useAsync(() => getIndicator(id), [id]);
+  const sp = use(searchParams);
+  const [range, setRange] = useState<RangeKey>(() => parseInitialRange(sp?.range));
+  const ind = useAsync(() => getIndicator(id, range), [id, range]);
   const hist = useAsync(() => getHistory(id, range), [id, range]);
   const d = ind.data;
-  const trend = trendOf(d?.change_1d);
+  const periodChange = d?.period_change ?? d?.change_1d;
+  const trend = trendOf(periodChange);
 
   return (
     <main className="container">
       <Link href="/" className="muted">← Quay lại Dashboard</Link>
       {ind.error && <ErrorState message={ind.error} onRetry={ind.reload} />}
-      {ind.loading && <Loading />}
+      {ind.loading && !ind.data && <Loading />}
       {ind.data && (
         <>
           <h1>{ind.data.name_vi} <small className="muted">({ind.data.symbol})</small></h1>
           <div className="stats">
-            <div className="card stat"><span className="muted">Giá trị mới nhất</span><strong>{formatNumber(d?.latest_value)} {ind.data.unit}</strong></div>
+            <div className="card stat">
+              <span className="muted">Giá trị mới nhất</span>
+              <strong>{formatNumber(d?.latest_value)} {ind.data.unit}</strong>
+            </div>
+            <div className="card stat">
+              <span className="muted">Biến động ({RANGE_LABEL[range]})</span>
+              <strong className={trendOf(periodChange)}>{formatPercent(periodChange)}</strong>
+            </div>
             {([["1 ngày", d?.change_1d], ["1 tuần", d?.change_1w]] as const).map(([l, c]) => (
               <div key={l} className="card stat"><span className="muted">{l}</span><strong className={trendOf(c)}>{formatPercent(c)}</strong></div>
             ))}
           </div>
           <section className="card">
-            <div className="chart-head"><h2>Biểu đồ</h2><RangeTabs value={range} onChange={setRange} /></div>
+            <div className="chart-head"><h2>Biểu đồ ({RANGE_LABEL[range]})</h2><RangeTabs value={range} onChange={setRange} /></div>
             {hist.loading && <Loading />}
             {hist.error && <ErrorState message={hist.error} onRetry={hist.reload} />}
             {hist.data && hist.data.length === 0 && <Empty message="Chưa có dữ liệu lịch sử." />}
@@ -42,7 +62,7 @@ export default function IndicatorDetailPage({ params }: { params: Promise<{ id: 
           </section>
           {hist.data && hist.data.length > 0 && (
             <section className="card">
-              <h2>Lịch sử giá trị</h2>
+              <h2>Lịch sử giá trị ({RANGE_LABEL[range]})</h2>
               <div className="table-wrap">
                 <table>
                   <thead><tr><th>Ngày</th><th>Giá trị</th><th>Δ so với phiên trước</th><th>MA20</th></tr></thead>
