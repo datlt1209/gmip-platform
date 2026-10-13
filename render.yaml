@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: gmip-backend
+    runtime: docker
+    repo: https://github.com/datlt1209/gmip-platform
+    branch: main
+    region: singapore
+    plan: free
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    envVars:
+      - key: ADMIN_SECRET_KEY
+        value: gmip-prod-secret-2026
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: TIMEZONE
+        value: Asia/Ho_Chi_Minh
+
+  - type: web
+    name: gmip-frontend
+    runtime: docker
+    repo: https://github.com/datlt1209/gmip-platform
+    branch: main
+    region: singapore
+    plan: free
+    dockerContext: ./frontend
+    dockerfilePath: ./frontend/Dockerfile
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://gmip-backend.onrender.com/api/v1
